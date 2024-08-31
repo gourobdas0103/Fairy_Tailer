@@ -8,9 +8,12 @@ def tokenize(text):
     words = re.findall(r'\b\w+\b', text)
     return words
 
-def build_vocabulary(words):
-    """Create a set of unique words."""
-    return set(words)
+def build_vocabulary(corpus):
+    """Build a vocabulary of unique unigrams from a 2D list corpus."""
+    unique_words = set()
+    for sentence in corpus:
+        unique_words.update(sentence)  # Add all words from the sentence to the set
+    return list(unique_words)  # Convert the set to a list before returning
 
 def count_unigrams(words):
     """Count occurrences of each word."""
@@ -51,6 +54,10 @@ def load_book(filename):
             sentence = line.strip().split()  # Split the line into words
             corpus.append(sentence)          # Append the list of words to the corpus
     return corpus
+
+def get_corpus_length(corpus):
+    """Calculate the total number of unigrams in the corpus."""
+    return sum(len(sentence) for sentence in corpus)
 
 def generate_text_unigram(unigram_probs, length=50):
     """Generate text based on unigram probabilities."""
