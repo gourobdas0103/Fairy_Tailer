@@ -1,6 +1,6 @@
-import re
 from collections import Counter, defaultdict
 import random
+import re
 
 def tokenize(text):
     """Convert text into a list of words."""
@@ -15,9 +15,15 @@ def build_vocabulary(corpus):
         unique_words.update(sentence)  # Add all words from the sentence to the set
     return list(unique_words)  # Convert the set to a list before returning
 
-def count_unigrams(words):
-    """Count occurrences of each word."""
-    return Counter(words)
+def count_unigrams(corpus):
+    """Count occurrences of each unigram in the corpus."""
+    # Flatten the 2D list into a single list of words
+    words = [word for sentence in corpus for word in sentence]
+
+    # Use Counter to count the frequency of each word
+    unigram_counts = Counter(words)
+
+    return unigram_counts
 
 def count_bigrams(words):
     """Count occurrences of each word pair."""
