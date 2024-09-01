@@ -35,8 +35,6 @@ def count_bigrams(corpus):
     for sentence in corpus:
         for i in range(len(sentence) - 1):
             word1, word2 = sentence[i], sentence[i + 1]
-            if word1 not in bigram_counts:
-                bigram_counts[word1] = Counter()
             bigram_counts[word1][word2] += 1
     return bigram_counts
 
@@ -55,6 +53,21 @@ def bigram_probabilities(bigram_counts, unigram_counts):
             print(f"Warning: '{w1}' has a count of zero in unigram counts, skipping bigram probabilities for '{w1}'.")
     return bigram_probs
 
+def build_bigram_probs(unigram_counts, bigram_counts):
+    """Compute bigram probabilities and organize them in the required format."""
+    bigram_probs = {}
+
+    for word1, word1_count in unigram_counts.items():
+        if word1 in bigram_counts:
+            words = list(bigram_counts[word1].keys())
+            probs = [bigram_counts[word1][word2] / word1_count for word2 in words]
+            bigram_probs[word1] = {"words": words, "probs": probs}
+        else:
+            # Ensure every word in unigram_counts is added, even if it has no bigram.
+            bigram_probs[word1] = {"words": [], "probs": []}
+
+    return bigram_probs
+
 def generate_text_unigram(vocabulary, unigram_probs, length=100):
     """Generate text based on unigram model."""
     import random
@@ -66,9 +79,9 @@ def generate_text_bigram(bigram_probs, start_word, length=100):
     current_word = start_word
     text = [current_word]
     for _ in range(length - 1):
-        next_words = list(bigram_probs.get(current_word, {}).keys())
-        if next_words:
-            next_word = random.choices(next_words, weights=bigram_probs[current_word].values())[0]
+        if current_word in bigram_probs and bigram_probs[current_word]["words"]:
+            next_words = bigram_probs[current_word]["words"]
+            next_word = random.choices(next_words, weights=bigram_probs[current_word]["probs"])[0]
             text.append(next_word)
             current_word = next_word
         else:

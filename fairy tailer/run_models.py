@@ -1,4 +1,8 @@
-from language import load_book, tokenize, build_vocabulary, count_unigrams, count_bigrams, unigram_probabilities, bigram_probabilities, generate_text_unigram, generate_text_bigram, make_start_corpus, build_unigram_probs
+from language import (
+    load_book, tokenize, build_vocabulary, count_unigrams, count_bigrams,
+    unigram_probabilities, bigram_probabilities, generate_text_unigram,
+    generate_text_bigram, make_start_corpus, build_unigram_probs, build_bigram_probs
+)
 
 # Load and process books
 corpus_andersen = load_book(r'C:\Users\gourob\Desktop\Infinizy\fairy tailer\andersen.txt')
@@ -25,10 +29,10 @@ unigram_probs_list_grimm = build_unigram_probs(vocabulary_grimm, unigram_counts_
 
 # Calculate probabilities
 unigram_probs_andersen = unigram_probabilities(unigram_counts_andersen)
-bigram_probs_andersen = bigram_probabilities(bigram_counts_andersen, unigram_counts_andersen)
+bigram_probs_andersen = build_bigram_probs(unigram_counts_andersen, bigram_counts_andersen)
 
 unigram_probs_grimm = unigram_probabilities(unigram_counts_grimm)
-bigram_probs_grimm = bigram_probabilities(bigram_counts_grimm, unigram_counts_grimm)
+bigram_probs_grimm = build_bigram_probs(unigram_counts_grimm, bigram_counts_grimm)
 
 # Generate text
 text_unigram_andersen = generate_text_unigram(vocabulary_andersen, unigram_probs_andersen, length=100)
