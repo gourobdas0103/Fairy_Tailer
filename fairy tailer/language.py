@@ -1,96 +1,77 @@
-from collections import Counter, defaultdict
-import random
 import re
+from collections import defaultdict, Counter
+
+def load_book(filename):
+    """Load a book and create a 2D list (corpus) where each row is a sentence and each column is a word."""
+    corpus = []
+    with open(filename, 'r', encoding='utf-8') as file:
+        for line in file:
+            sentence = re.findall(r'\b\w+\b', line.lower())
+            if sentence:
+                corpus.append(sentence)
+    return corpus
 
 def tokenize(text):
-    """Convert text into a list of words."""
-    text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
-    return words
+    """Tokenize the text into words."""
+    return re.findall(r'\b\w+\b', text.lower())
 
 def build_vocabulary(corpus):
-    """Build a vocabulary of unique unigrams from a 2D list corpus."""
-    unique_words = set()
+    """Build vocabulary from the corpus."""
+    vocabulary = set()
     for sentence in corpus:
-        unique_words.update(sentence)  # Add all words from the sentence to the set
-    return list(unique_words)  # Convert the set to a list before returning
+        vocabulary.update(sentence)
+    return vocabulary
 
 def count_unigrams(corpus):
-    """Count occurrences of each unigram in the corpus."""
-    # Flatten the 2D list into a single list of words
-    words = [word for sentence in corpus for word in sentence]
-
-    # Use Counter to count the frequency of each word
-    unigram_counts = Counter(words)
-
+    """Count unigrams in the corpus."""
+    unigram_counts = Counter()
+    for sentence in corpus:
+        unigram_counts.update(sentence)
     return unigram_counts
 
-def count_bigrams(words):
-    """Count occurrences of each word pair."""
-    bigrams = [(words[i], words[i + 1]) for i in range(len(words) - 1)]
-    return Counter(bigrams)
-
-def uniform_probabilities(vocabulary):
-    """Compute uniform probabilities for all words in the vocabulary."""
-    vocab_size = len(vocabulary)
-    return {word: 1 / vocab_size for word in vocabulary}
+def count_bigrams(corpus):
+    """Count bigrams in the corpus."""
+    bigram_counts = Counter()
+    for sentence in corpus:
+        bigrams = zip(sentence, sentence[1:])
+        bigram_counts.update(bigrams)
+    return bigram_counts
 
 def unigram_probabilities(unigram_counts):
-    """Compute probabilities of words based on unigram counts."""
+    """Calculate unigram probabilities."""
     total_count = sum(unigram_counts.values())
     return {word: count / total_count for word, count in unigram_counts.items()}
 
 def bigram_probabilities(bigram_counts, unigram_counts):
-    """Compute probabilities of word pairs based on bigram counts."""
-    bigram_probs = defaultdict(lambda: defaultdict(float))
+    """Calculate bigram probabilities based on bigram and unigram counts."""
+    bigram_probs = defaultdict(dict)
     for (w1, w2), count in bigram_counts.items():
-        bigram_probs[w1][w2] = count / unigram_counts[w1]  # P(w2|w1)
+        if unigram_counts[w1] > 0:
+            bigram_probs[w1][w2] = count / unigram_counts[w1]
+        else:
+            print(f"Warning: '{w1}' has a count of zero in unigram counts, skipping bigram ({w1}, {w2}).")
     return bigram_probs
 
-def load_text(file_path):
-    """Read text from a file."""
-    with open(file_path, 'r', encoding='utf-8') as file:
-        return file.read()
+def generate_text_unigram(vocabulary, unigram_probs, length=100):
+    """Generate text based on unigram model."""
+    import random
+    return ' '.join(random.choices(list(vocabulary), weights=unigram_probs.values(), k=length))
 
-def load_book(filename):
-    """Load a book and create a 2D list (corpus) where each row is a sentence and each column is a word or symbol."""
-    corpus = []
-    with open(filename, 'r', encoding='utf-8') as file:
-        for line in file:
-            sentence = line.strip().split()  # Split the line into words
-            corpus.append(sentence)          # Append the list of words to the corpus
-    return corpus
-
-def get_corpus_length(corpus):
-    """Calculate the total number of unigrams in the corpus."""
-    return sum(len(sentence) for sentence in corpus)
-
-def generate_text_unigram(unigram_probs, length=50):
-    """Generate text based on unigram probabilities."""
-    words = list(unigram_probs.keys())
-    text = []
-
-    for _ in range(length):
-        next_word = random.choices(words, weights=unigram_probs.values())[0]
-        text.append(next_word)
-
-    return ' '.join(text)
-
-def generate_text_bigram(bigram_probs, start_word, length=50):
-    """Generate text based on bigram probabilities."""
+def generate_text_bigram(bigram_probs, start_word, length=100):
+    """Generate text based on bigram model starting with a given word."""
+    import random
     current_word = start_word
     text = [current_word]
-
     for _ in range(length - 1):
-        next_word_probs = bigram_probs.get(current_word, {})
-
-        if not next_word_probs:
-            # If no valid bigram found, pick a random word to continue
-            next_word = random.choice(list(bigram_probs.keys()))
+        next_words = list(bigram_probs.get(current_word, {}).keys())
+        if next_words:
+            next_word = random.choices(next_words, weights=bigram_probs[current_word].values())[0]
+            text.append(next_word)
+            current_word = next_word
         else:
-            next_word = random.choices(list(next_word_probs.keys()), weights=next_word_probs.values())[0]
-
-        text.append(next_word)
-        current_word = next_word
-
+            break
     return ' '.join(text)
+
+def make_start_corpus(corpus):
+    """Create a new corpus containing only the starting word of each sentence."""
+    return [[sentence[0]] for sentence in corpus if sentence]
