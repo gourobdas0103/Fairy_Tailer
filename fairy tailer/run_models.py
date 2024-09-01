@@ -1,4 +1,4 @@
-from language import load_book, tokenize, build_vocabulary, count_unigrams, count_bigrams, unigram_probabilities, bigram_probabilities, generate_text_unigram, generate_text_bigram, make_start_corpus
+from language import load_book, tokenize, build_vocabulary, count_unigrams, count_bigrams, unigram_probabilities, bigram_probabilities, generate_text_unigram, generate_text_bigram, make_start_corpus, build_unigram_probs
 
 # Load and process books
 corpus_andersen = load_book(r'C:\Users\gourob\Desktop\Infinizy\fairy tailer\andersen.txt')
@@ -14,6 +14,14 @@ bigram_counts_andersen = count_bigrams(corpus_andersen)
 
 unigram_counts_grimm = count_unigrams(corpus_grimm)
 bigram_counts_grimm = count_bigrams(corpus_grimm)
+
+# Calculate total word counts
+total_count_andersen = sum(unigram_counts_andersen.values())
+total_count_grimm = sum(unigram_counts_grimm.values())
+
+# Build unigram probabilities
+unigram_probs_list_andersen = build_unigram_probs(vocabulary_andersen, unigram_counts_andersen, total_count_andersen)
+unigram_probs_list_grimm = build_unigram_probs(vocabulary_grimm, unigram_counts_grimm, total_count_grimm)
 
 # Calculate probabilities
 unigram_probs_andersen = unigram_probabilities(unigram_counts_andersen)
@@ -49,3 +57,12 @@ print(start_words_andersen)
 
 print("\nStart words in Grimm corpus:")
 print(start_words_grimm)
+
+# Print unigram probabilities
+print("\nUnigram probabilities (Andersen):")
+for word, prob in zip(vocabulary_andersen, unigram_probs_list_andersen):
+    print(f"{word}: {prob:.4f}")
+
+print("\nUnigram probabilities (Grimm):")
+for word, prob in zip(vocabulary_grimm, unigram_probs_list_grimm):
+    print(f"{word}: {prob:.4f}")
