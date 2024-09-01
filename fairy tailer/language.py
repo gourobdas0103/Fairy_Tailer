@@ -30,11 +30,15 @@ def count_unigrams(corpus):
     return unigram_counts
 
 def count_bigrams(corpus):
-    """Count bigrams in the corpus."""
-    bigram_counts = Counter()
+    """Count bigrams in the corpus and return a 2D dictionary."""
+    bigram_counts = defaultdict(lambda: defaultdict(int))
+
     for sentence in corpus:
-        bigrams = zip(sentence, sentence[1:])
-        bigram_counts.update(bigrams)
+        for i in range(len(sentence) - 1):
+            word1 = sentence[i]
+            word2 = sentence[i + 1]
+            bigram_counts[word1][word2] += 1
+
     return bigram_counts
 
 def unigram_probabilities(unigram_counts):
@@ -45,11 +49,13 @@ def unigram_probabilities(unigram_counts):
 def bigram_probabilities(bigram_counts, unigram_counts):
     """Calculate bigram probabilities based on bigram and unigram counts."""
     bigram_probs = defaultdict(dict)
-    for (w1, w2), count in bigram_counts.items():
+    for w1, following_words in bigram_counts.items():
         if unigram_counts[w1] > 0:
-            bigram_probs[w1][w2] = count / unigram_counts[w1]
+            total_w1_count = unigram_counts[w1]
+            for w2, count in following_words.items():
+                bigram_probs[w1][w2] = count / total_w1_count
         else:
-            print(f"Warning: '{w1}' has a count of zero in unigram counts, skipping bigram ({w1}, {w2}).")
+            print(f"Warning: '{w1}' has a count of zero in unigram counts, skipping bigram probabilities.")
     return bigram_probs
 
 def generate_text_unigram(vocabulary, unigram_probs, length=100):

@@ -6,9 +6,10 @@ class TestLanguageModels(unittest.TestCase):
     def setUp(self):
         self.text = "Once upon a time in a land far away, there was a kingdom ruled by a wise king."
         self.words = tokenize(self.text)
-        self.unigram_counts = count_unigrams(self.words)
-        self.bigram_counts = count_bigrams(self.words)
-        self.vocabulary = build_vocabulary(self.words)
+        self.corpus = [self.words]  # Wrapping words in a list to simulate corpus
+        self.unigram_counts = count_unigrams(self.corpus)
+        self.bigram_counts = count_bigrams(self.corpus)
+        self.vocabulary = build_vocabulary(self.corpus)
         self.unigram_probs = unigram_probabilities(self.unigram_counts)
         self.bigram_probs = bigram_probabilities(self.bigram_counts, self.unigram_counts)
 
@@ -22,7 +23,7 @@ class TestLanguageModels(unittest.TestCase):
         self.assertEqual(self.unigram_counts['a'], 4)
 
     def test_count_bigrams(self):
-        self.assertEqual(self.bigram_counts[('a', 'time')], 1)
+        self.assertEqual(self.bigram_counts['a']['time'], 1)
 
     def test_unigram_probabilities(self):
         self.assertAlmostEqual(self.unigram_probs['a'], 4 / 16)
@@ -31,7 +32,7 @@ class TestLanguageModels(unittest.TestCase):
         self.assertAlmostEqual(self.bigram_probs['a']['time'], 1 / 4)
 
     def test_generate_text_unigram(self):
-        generated_text = generate_text_unigram(self.unigram_probs, length=10)
+        generated_text = generate_text_unigram(self.vocabulary, self.unigram_probs, length=10)
         self.assertTrue(len(generated_text.split()) == 10)
 
     def test_generate_text_bigram(self):
