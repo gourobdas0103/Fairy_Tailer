@@ -39,6 +39,11 @@ def count_bigrams(corpus):
             bigram_counts[word1][word2] += 1
     return bigram_counts
 
+def uniform_probabilities(vocabulary):
+    """Calculate uniform probabilities for each word in the vocabulary."""
+    total_words = len(vocabulary)
+    return {word: 1 / total_words for word in vocabulary}
+
 def unigram_probabilities(unigram_counts):
     """Calculate unigram probabilities."""
     total_count = sum(unigram_counts.values())
@@ -49,15 +54,14 @@ def bigram_probabilities(bigram_counts, unigram_counts):
     bigram_probs = defaultdict(lambda: {"words": [], "probs": []})
     for w1, counter in bigram_counts.items():
         if unigram_counts[w1] > 0:
-            words = list(counter.keys())
-            probs = [count / unigram_counts[w1] for count in counter.values()]
+            words = []
+            probs = []
+            for w2, count in counter.items():
+                words.append(w2)
+                probs.append(count / unigram_counts[w1])
             bigram_probs[w1]["words"] = words
             bigram_probs[w1]["probs"] = probs
     return bigram_probs
-
-def build_unigram_probs(unigrams, unigram_counts, total_count):
-    """Build a list of unigram probabilities."""
-    return [unigram_counts.get(word, 0) / total_count for word in unigrams]
 
 def generate_text_unigram(vocabulary, unigram_probs, length=100):
     """Generate text based on unigram model."""
@@ -68,26 +72,44 @@ def generate_text_bigram(bigram_probs, start_word, length=100):
     current_word = start_word
     text = [current_word]
     for _ in range(length - 1):
-        if current_word in bigram_probs and bigram_probs[current_word]["words"]:
+        if current_word in bigram_probs:
             next_words = bigram_probs[current_word]["words"]
-            next_probs = bigram_probs[current_word]["probs"]
-            next_word = random.choices(next_words, weights=next_probs)[0]
+            probs = bigram_probs[current_word]["probs"]
+            next_word = random.choices(next_words, weights=probs)[0]
             text.append(next_word)
             current_word = next_word
         else:
             break
     return ' '.join(text)
 
+def generate_text_from_unigrams(count, words, probs):
+    """Generate text based on unigram model."""
+    return ' '.join(random.choices(words, weights=probs, k=count))
+
+def generate_text_from_bigrams(count, start_words, start_word_probs, bigram_probs):
+    """Generate text based on bigram model."""
+    text = []
+    current_word = random.choices(start_words, weights=start_word_probs)[0] if start_words else ''
+    for _ in range(count):
+        if not text or text[-1].endswith('.'):
+            current_word = random.choices(start_words, weights=start_word_probs)[0]
+        elif current_word in bigram_probs:
+            next_words = bigram_probs[current_word]["words"]
+            probs = bigram_probs[current_word]["probs"]
+            current_word = random.choices(next_words, weights=probs)[0]
+        text.append(current_word)
+    return ' '.join(text)
+
 def make_start_corpus(corpus):
     """Create a new corpus containing only the starting word of each sentence."""
     return [sentence[0] for sentence in corpus if sentence]
 
-def get_top_words(count, words, probs, ignore_list):
-    """Get the top `count` words with highest probabilities, ignoring words in `ignore_list`."""
-    word_prob_pairs = [(word, prob) for word, prob in zip(words, probs) if word not in ignore_list]
-    sorted_words = sorted(word_prob_pairs, key=lambda x: x[1], reverse=True)
-    return dict(sorted_words[:count])
+def build_unigram_probs(unigrams, unigram_counts, total_count):
+    """Build a list of unigram probabilities."""
+    return [unigram_counts.get(word, 0) / total_count for word in unigrams]
 
-def generate_text_from_unigrams(count, words, probs):
-    """Generate text based on unigram probabilities."""
-    return ' '.join(random.choices(words, weights=probs, k=count))
+def get_top_words(count, words, probs, ignore_list):
+    """Get the top `count` words with highest probabilities, excluding words in `ignore_list`."""
+    word_prob_dict = {word: prob for word, prob in zip(words, probs) if word not in ignore_list}
+    sorted_words = sorted(word_prob_dict.items(), key=lambda x: x[1], reverse=True)
+    return dict(sorted_words[:count])
