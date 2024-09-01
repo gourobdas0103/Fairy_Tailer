@@ -1,4 +1,9 @@
-from language import load_book, build_vocabulary, count_unigrams, count_bigrams, unigram_probabilities, bigram_probabilities, generate_text_unigram, generate_text_bigram, make_start_corpus, build_unigram_probs, get_top_words
+from language import (
+    load_book, tokenize, build_vocabulary, count_unigrams, count_bigrams,
+    unigram_probabilities, bigram_probabilities, generate_text_unigram,
+    generate_text_bigram, make_start_corpus, build_unigram_probs, get_top_words,
+    generate_text_from_unigrams
+)
 
 # Load and process books
 corpus_andersen = load_book(r'C:\Users\gourob\Desktop\Infinizy\fairy tailer\andersen.txt')
@@ -67,10 +72,10 @@ print("\nUnigram probabilities (Grimm):")
 for word, prob in zip(vocabulary_grimm, unigram_probs_list_grimm):
     print(f"{word}: {prob:.4f}")
 
-# Print top words
-ignore_list = []  # Add any words you want to ignore here
-top_words_andersen = get_top_words(10, vocabulary_andersen, unigram_probs_list_andersen, ignore_list)
-top_words_grimm = get_top_words(10, vocabulary_grimm, unigram_probs_list_grimm, ignore_list)
+# Get and print top words
+ignore_list = ['the', 'and', 'to']  # Example ignore list
+top_words_andersen = get_top_words(count=10, words=list(vocabulary_andersen), probs=unigram_probs_list_andersen, ignore_list=ignore_list)
+top_words_grimm = get_top_words(count=10, words=list(vocabulary_grimm), probs=unigram_probs_list_grimm, ignore_list=ignore_list)
 
 print("\nTop words (Andersen):")
 for word, prob in top_words_andersen.items():
@@ -79,3 +84,13 @@ for word, prob in top_words_andersen.items():
 print("\nTop words (Grimm):")
 for word, prob in top_words_grimm.items():
     print(f"{word}: {prob:.4f}")
+
+# Generate text from top unigram probabilities
+text_from_top_unigrams_andersen = generate_text_from_unigrams(count=100, words=list(top_words_andersen.keys()), probs=list(top_words_andersen.values()))
+text_from_top_unigrams_grimm = generate_text_from_unigrams(count=100, words=list(top_words_grimm.keys()), probs=list(top_words_grimm.values()))
+
+print("\nGenerated text from top unigrams (Andersen):")
+print(text_from_top_unigrams_andersen)
+
+print("\nGenerated text from top unigrams (Grimm):")
+print(text_from_top_unigrams_grimm)

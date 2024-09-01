@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict, Counter
+import random
 
 def load_book(filename):
     """Load a book and create a 2D list (corpus) where each row is a sentence and each column is a word."""
@@ -50,36 +51,27 @@ def bigram_probabilities(bigram_counts, unigram_counts):
         if unigram_counts[w1] > 0:
             words = list(counter.keys())
             probs = [count / unigram_counts[w1] for count in counter.values()]
-            bigram_probs[w1] = {"words": words, "probs": probs}
+            bigram_probs[w1]["words"] = words
+            bigram_probs[w1]["probs"] = probs
     return bigram_probs
 
-def build_bigram_probs(unigram_counts, bigram_counts):
-    """Compute bigram probabilities and organize them in the required format."""
-    bigram_probs = {}
-
-    for word1, word1_count in unigram_counts.items():
-        if word1 in bigram_counts:
-            words = list(bigram_counts[word1].keys())
-            probs = [bigram_counts[word1][word2] / word1_count for word2 in words]
-            bigram_probs[word1] = {"words": words, "probs": probs}
-
-    return bigram_probs
+def build_unigram_probs(unigrams, unigram_counts, total_count):
+    """Build a list of unigram probabilities."""
+    return [unigram_counts.get(word, 0) / total_count for word in unigrams]
 
 def generate_text_unigram(vocabulary, unigram_probs, length=100):
     """Generate text based on unigram model."""
-    import random
     return ' '.join(random.choices(list(vocabulary), weights=unigram_probs.values(), k=length))
 
 def generate_text_bigram(bigram_probs, start_word, length=100):
     """Generate text based on bigram model starting with a given word."""
-    import random
     current_word = start_word
     text = [current_word]
     for _ in range(length - 1):
         if current_word in bigram_probs and bigram_probs[current_word]["words"]:
             next_words = bigram_probs[current_word]["words"]
-            probs = bigram_probs[current_word]["probs"]
-            next_word = random.choices(next_words, weights=probs)[0]
+            next_probs = bigram_probs[current_word]["probs"]
+            next_word = random.choices(next_words, weights=next_probs)[0]
             text.append(next_word)
             current_word = next_word
         else:
@@ -88,15 +80,14 @@ def generate_text_bigram(bigram_probs, start_word, length=100):
 
 def make_start_corpus(corpus):
     """Create a new corpus containing only the starting word of each sentence."""
-    return [[sentence[0]] for sentence in corpus if sentence]
-
-def build_unigram_probs(unigrams, unigram_counts, total_count):
-    """Build a list of unigram probabilities."""
-    return [unigram_counts.get(word, 0) / total_count for word in unigrams]
+    return [sentence[0] for sentence in corpus if sentence]
 
 def get_top_words(count, words, probs, ignore_list):
-    """Get the top `count` words with the highest probabilities, ignoring words in `ignore_list`."""
+    """Get the top `count` words with highest probabilities, ignoring words in `ignore_list`."""
     word_prob_pairs = [(word, prob) for word, prob in zip(words, probs) if word not in ignore_list]
-    word_prob_pairs.sort(key=lambda x: x[1], reverse=True)
-    top_words = dict(word_prob_pairs[:count])
-    return top_words
+    sorted_words = sorted(word_prob_pairs, key=lambda x: x[1], reverse=True)
+    return dict(sorted_words[:count])
+
+def generate_text_from_unigrams(count, words, probs):
+    """Generate text based on unigram probabilities."""
+    return ' '.join(random.choices(words, weights=probs, k=count))
