@@ -1,8 +1,4 @@
-from language import (
-    load_book, tokenize, build_vocabulary, count_unigrams, count_bigrams,
-    unigram_probabilities, bigram_probabilities, generate_text_unigram,
-    generate_text_bigram, make_start_corpus, build_unigram_probs, build_bigram_probs
-)
+from language import load_book, build_vocabulary, count_unigrams, count_bigrams, unigram_probabilities, bigram_probabilities, generate_text_unigram, generate_text_bigram, make_start_corpus, build_unigram_probs, get_top_words
 
 # Load and process books
 corpus_andersen = load_book(r'C:\Users\gourob\Desktop\Infinizy\fairy tailer\andersen.txt')
@@ -29,10 +25,10 @@ unigram_probs_list_grimm = build_unigram_probs(vocabulary_grimm, unigram_counts_
 
 # Calculate probabilities
 unigram_probs_andersen = unigram_probabilities(unigram_counts_andersen)
-bigram_probs_andersen = build_bigram_probs(unigram_counts_andersen, bigram_counts_andersen)
+bigram_probs_andersen = bigram_probabilities(bigram_counts_andersen, unigram_counts_andersen)
 
 unigram_probs_grimm = unigram_probabilities(unigram_counts_grimm)
-bigram_probs_grimm = build_bigram_probs(unigram_counts_grimm, bigram_counts_grimm)
+bigram_probs_grimm = bigram_probabilities(bigram_counts_grimm, unigram_counts_grimm)
 
 # Generate text
 text_unigram_andersen = generate_text_unigram(vocabulary_andersen, unigram_probs_andersen, length=100)
@@ -69,4 +65,17 @@ for word, prob in zip(vocabulary_andersen, unigram_probs_list_andersen):
 
 print("\nUnigram probabilities (Grimm):")
 for word, prob in zip(vocabulary_grimm, unigram_probs_list_grimm):
+    print(f"{word}: {prob:.4f}")
+
+# Print top words
+ignore_list = []  # Add any words you want to ignore here
+top_words_andersen = get_top_words(10, vocabulary_andersen, unigram_probs_list_andersen, ignore_list)
+top_words_grimm = get_top_words(10, vocabulary_grimm, unigram_probs_list_grimm, ignore_list)
+
+print("\nTop words (Andersen):")
+for word, prob in top_words_andersen.items():
+    print(f"{word}: {prob:.4f}")
+
+print("\nTop words (Grimm):")
+for word, prob in top_words_grimm.items():
     print(f"{word}: {prob:.4f}")

@@ -45,12 +45,12 @@ def unigram_probabilities(unigram_counts):
 
 def bigram_probabilities(bigram_counts, unigram_counts):
     """Calculate bigram probabilities based on bigram and unigram counts."""
-    bigram_probs = defaultdict(dict)
+    bigram_probs = defaultdict(lambda: {"words": [], "probs": []})
     for w1, counter in bigram_counts.items():
         if unigram_counts[w1] > 0:
-            bigram_probs[w1] = {w2: count / unigram_counts[w1] for w2, count in counter.items()}
-        else:
-            print(f"Warning: '{w1}' has a count of zero in unigram counts, skipping bigram probabilities for '{w1}'.")
+            words = list(counter.keys())
+            probs = [count / unigram_counts[w1] for count in counter.values()]
+            bigram_probs[w1] = {"words": words, "probs": probs}
     return bigram_probs
 
 def build_bigram_probs(unigram_counts, bigram_counts):
@@ -62,9 +62,6 @@ def build_bigram_probs(unigram_counts, bigram_counts):
             words = list(bigram_counts[word1].keys())
             probs = [bigram_counts[word1][word2] / word1_count for word2 in words]
             bigram_probs[word1] = {"words": words, "probs": probs}
-        else:
-            # Ensure every word in unigram_counts is added, even if it has no bigram.
-            bigram_probs[word1] = {"words": [], "probs": []}
 
     return bigram_probs
 
@@ -81,7 +78,8 @@ def generate_text_bigram(bigram_probs, start_word, length=100):
     for _ in range(length - 1):
         if current_word in bigram_probs and bigram_probs[current_word]["words"]:
             next_words = bigram_probs[current_word]["words"]
-            next_word = random.choices(next_words, weights=bigram_probs[current_word]["probs"])[0]
+            probs = bigram_probs[current_word]["probs"]
+            next_word = random.choices(next_words, weights=probs)[0]
             text.append(next_word)
             current_word = next_word
         else:
@@ -95,3 +93,10 @@ def make_start_corpus(corpus):
 def build_unigram_probs(unigrams, unigram_counts, total_count):
     """Build a list of unigram probabilities."""
     return [unigram_counts.get(word, 0) / total_count for word in unigrams]
+
+def get_top_words(count, words, probs, ignore_list):
+    """Get the top `count` words with the highest probabilities, ignoring words in `ignore_list`."""
+    word_prob_pairs = [(word, prob) for word, prob in zip(words, probs) if word not in ignore_list]
+    word_prob_pairs.sort(key=lambda x: x[1], reverse=True)
+    top_words = dict(word_prob_pairs[:count])
+    return top_words
